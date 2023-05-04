@@ -11,8 +11,10 @@ from .networks import by_name as model_by_name
 class RecognitionModel(pl.LightningModule):
 
     def __init__(self, network, dataset: str, num_classes, img_shape: Tuple[int, int],
-                 dim: int = 3, **model_kwargs):
+                 dim: int = 3, learning_rate: float = 5e-3, **model_kwargs):
         super(RecognitionModel, self).__init__()
+        self.optimizer_kwargs = dict(lr=learning_rate)
+        self.criterion = torch.nn.CrossEntropyLoss()
         self.num_outputs = num_classes
         self.dim = dim
 
