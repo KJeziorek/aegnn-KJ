@@ -45,7 +45,8 @@ def main(args):
                                             img_shape=dm.dims, dim=args.dim, bias=True, root_weight=True)
 
     if not args.debug:
-        wandb_logger = pl.loggers.WandbLogger(project=project, save_dir=log_dir, settings=log_settings)
+        wandb_logger = pl.loggers.WandbLogger(project=project, save_dir=log_dir)
+        #wandb_logger = pl.loggers.WandbLogger(project=project, save_dir=log_dir, settings=log_settings)
         if args.log_gradients:
             wandb_logger.watch(model, log="gradients")  # gradients plot every 100 training batches
         loggers.append(wandb_logger)
