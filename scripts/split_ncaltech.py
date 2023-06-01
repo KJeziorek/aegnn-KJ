@@ -19,20 +19,19 @@ for subdir, dirs, files in os.walk(directory):
         os.makedirs(os.path.join(dst_train, dire), exist_ok=True)
         os.makedirs(os.path.join(dst_test, dire), exist_ok=True)
         os.makedirs(os.path.join(dst_val, dire), exist_ok=True)
-
+		
+        os.makedirs(os.path.join('data/storage/annotations', dire), exist_ok=True)
         size = len(os.listdir(os.path.join(directory, dire)))
         train_id = int(size*train)
         test_id = int(size*(train+test))
         for id, filename in enumerate(os.listdir(os.path.join(directory, dire))):
             src = os.path.join(directory, dire, filename)
             annot = os.path.join(ann_directory, dire, filename.replace("image", "annotation"))
+            shutil.copyfile(annot, os.path.join('data/storage/ncaltech101/annotations', dire, filename.replace("image", "annotation")))
             
             if id < train_id:
                 shutil.copyfile(src, os.path.join(dst_train, dire, filename))
-                shutil.copyfile(annot, os.path.join(dst_train, dire, filename.replace("image", "annotation")))
             elif id < test_id:
                 shutil.copyfile(src, os.path.join(dst_test, dire, filename))
-                shutil.copyfile(annot, os.path.join(dst_test, dire, filename.replace("image", "annotation")))
             else:
                 shutil.copyfile(src, os.path.join(dst_val, dire, filename))
-                shutil.copyfile(annot, os.path.join(dst_val, dire, filename.replace("image", "annotation")))
