@@ -20,7 +20,7 @@ for subdir, dirs, files in os.walk(directory):
         os.makedirs(os.path.join(dst_test, dire), exist_ok=True)
         os.makedirs(os.path.join(dst_val, dire), exist_ok=True)
 		
-        os.makedirs(os.path.join('data/storage/annotations', dire), exist_ok=True)
+        os.makedirs(os.path.join('data/storage/ncaltech101/annotations', dire), exist_ok=True)
         size = len(os.listdir(os.path.join(directory, dire)))
         train_id = int(size*train)
         test_id = int(size*(train+test))
