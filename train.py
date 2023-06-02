@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument("--seed", default=12345, type=int)
 
     group = parser.add_argument_group("Trainer")
-    group.add_argument("--max-epochs", default=150, type=int)
+    group.add_argument("--max-epochs", default=200, type=int)
     group.add_argument("--overfit-batches", default=0.0, type=int)
     group.add_argument("--log-every-n-steps", default=10, type=int)
     group.add_argument("--gradient_clip_val", default=0.0, type=float)
