@@ -25,8 +25,8 @@ class PTC(torch.nn.Module):
             pooling_outputs = 32
         elif dataset == "ncaltech101" or dataset == "gen1":
             kernel_size = 8
-            n = [1, 4, 8, 8, 8, 16, 16, 16]
-            pooling_outputs = 16
+            n = [1, 8, 8, 32, 32, 128]
+            pooling_outputs = 128
         else:
             raise NotImplementedError(f"No model parameters for dataset {dataset}")
 
@@ -39,44 +39,67 @@ class PTC(torch.nn.Module):
         self.norm3 = BatchNorm(in_channels=n[3])
         self.conv4 = PointTransformerConv(n[3], n[4])
         self.norm4 = BatchNorm(in_channels=n[4])
+        self.pool3 = MaxPooling(pooling_size, transform=Cartesian(norm=True, cat=False))
 
         self.conv5 = PointTransformerConv(n[4], n[5])
         self.norm5 = BatchNorm(in_channels=n[5])
-        self.pool5 = MaxPooling(pooling_size, transform=Cartesian(norm=True, cat=False))
 
-        self.conv6 = PointTransformerConv(n[5], n[6])
-        self.norm6 = BatchNorm(in_channels=n[6])
-        self.conv7 = PointTransformerConv(n[6], n[7])
-        self.norm7 = BatchNorm(in_channels=n[7])
-
-        #self.pool7 = MaxPoolingX(input_shape[:2] // 4, size=16)
-        self.pool7 = MaxPoolingX(torch.div(input_shape[:2], 4, rounding_mode='floor'), size=16)
+        self.pool5 = MaxPoolingX(torch.div(input_shape[:2], 4, rounding_mode='floor'), size=16)
         self.fc = Linear(pooling_outputs * 16, out_features=num_outputs, bias=bias)
-
+    
     def forward(self, data: torch_geometric.data.Batch) -> torch.Tensor:
         data.x = elu(self.conv1(data.x, data.pos, data.edge_index))
         data.x = self.norm1(data.x)
+
+        x_sc = data.x.clone()
+
         data.x = elu(self.conv2(data.x, data.pos, data.edge_index))
         data.x = self.norm2(data.x)
 
-        x_sc = data.x.clone()
+        data.x = data.x + x_sc
+
         data.x = elu(self.conv3(data.x, data.pos, data.edge_index))
         data.x = self.norm3(data.x)
-        data.x = elu(self.conv4(data.x, data.pos, data.edge_index))
-        data.x = self.norm4(data.x)
-        data.x = data.x + x_sc
-
-        data.x = elu(self.conv5(data.x, data.pos, data.edge_index))
-        data.x = self.norm5(data.x)
-        data = self.pool5(data.x, pos=data.pos, batch=data.batch, edge_index=data.edge_index, return_data_obj=True)
+        data = self.pool3(data.x, pos=data.pos, batch=data.batch, edge_index=data.edge_index, return_data_obj=True)
 
         x_sc = data.x.clone()
-        data.x = elu(self.conv6(data.x, data.pos, data.edge_index))
-        data.x = self.norm6(data.x)
-        data.x = elu(self.conv7(data.x, data.pos, data.edge_index))
-        data.x = self.norm7(data.x)
-        data.x = data.x + x_sc
 
-        x = self.pool7(data.x, pos=data.pos[:, :2], batch=data.batch)
+        data.x = elu(self.conv4(data.x, data.pos, data.edge_index))
+        data.x = self.norm4(data.x)
+        
+        data.x = data.x + x_sc
+        
+        data.x = elu(self.conv5(data.x, data.pos, data.edge_index))
+        data.x = self.norm5(data.x)
+
+        x = self.pool5(data.x, pos=data.pos[:, :2], batch=data.batch)
         x = x.view(-1, self.fc.in_features)
         return self.fc(x)
+    
+    # def forward(self, data: torch_geometric.data.Batch) -> torch.Tensor:
+    #     data.x = elu(self.conv1(data.x, data.pos, data.edge_index))
+    #     data.x = self.norm1(data.x)
+    #     data.x = elu(self.conv2(data.x, data.pos, data.edge_index))
+    #     data.x = self.norm2(data.x)
+
+    #     x_sc = data.x.clone()
+    #     data.x = elu(self.conv3(data.x, data.pos, data.edge_index))
+    #     data.x = self.norm3(data.x)
+    #     data.x = elu(self.conv4(data.x, data.pos, data.edge_index))
+    #     data.x = self.norm4(data.x)
+    #     data.x = data.x + x_sc
+
+    #     data.x = elu(self.conv5(data.x, data.pos, data.edge_index))
+    #     data.x = self.norm5(data.x)
+    #     data = self.pool5(data.x, pos=data.pos, batch=data.batch, edge_index=data.edge_index, return_data_obj=True)
+
+    #     x_sc = data.x.clone()
+    #     data.x = elu(self.conv6(data.x, data.pos, data.edge_index))
+    #     data.x = self.norm6(data.x)
+    #     data.x = elu(self.conv7(data.x, data.pos, data.edge_index))
+    #     data.x = self.norm7(data.x)
+    #     data.x = data.x + x_sc
+
+    #     x = self.pool7(data.x, pos=data.pos[:, :2], batch=data.batch)
+    #     x = x.view(-1, self.fc.in_features)
+    #     return self.fc(x)

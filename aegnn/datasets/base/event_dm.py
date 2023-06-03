@@ -140,7 +140,7 @@ class EventDataModule(pl.LightningDataModule):
         parent_parser.add_argument("--dataset", action="store", type=str, required=True)
 
         group = parent_parser.add_argument_group("Data")
-        group.add_argument("--batch-size", action="store", default=8, type=int)
+        group.add_argument("--batch-size", action="store", default=16, type=int)
         group.add_argument("--num-workers", action="store", default=8, type=int)
         group.add_argument("--pin-memory", action="store_true")
         return parent_parser

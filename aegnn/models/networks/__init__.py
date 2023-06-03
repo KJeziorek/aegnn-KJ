@@ -7,7 +7,7 @@ from .PTC import PTC
 from .SAGE import SAGE
 from .PNC import PNC
 from .GATv2 import GATv2
-from .PGC import PGC
+#from .PGC import PGC  # only for PyTorch Geometric >= 2.3.0
 ################################################################################################
 # Access functions #############################################################################
 ################################################################################################
@@ -31,7 +31,7 @@ def by_name(name: str) -> torch.nn.Module.__class__:
         return PNC
     elif name == 'gat':
         return GATv2
-    elif name == 'pgc':
-        return PGC
+    # elif name == 'pgc':  # only for PyTorch Geometric >= 2.3.0
+    #     return PGC
     else:
         raise NotImplementedError(f"Network {name} is not implemented!")

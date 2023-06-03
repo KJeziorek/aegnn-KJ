@@ -24,49 +24,37 @@ class EDGE(torch.nn.Module):
             n = [1, 8, 16, 16, 16, 32, 32, 32, 32]
             pooling_outputs = 32
         elif dataset == "ncaltech101" or dataset == "gen1":
-            kernel_size = 8
-            n = [1, 8, 16, 16, 16, 32, 32, 32]
-            pooling_outputs = 32
+            n = [1, 16, 32, 32, 32, 128, 128, 128]
+            pooling_outputs = 128
         else:
             raise NotImplementedError(f"No model parameters for dataset {dataset}")
 
-        self.mlp1 = Sequential(Linear(2*n[0], n[1]),
-                              ReLU(),
-                              Linear(n[1], n[1]))
+        self.mlp1 = Linear(n[0] * 2, n[1])
         self.conv1 = EdgeConv(self.mlp1)
         self.norm1 = BatchNorm(in_channels=n[1])
-        self.mlp2 = Sequential(Linear(2*n[1], n[2]),
-                              ReLU(),
-                              Linear(n[2], n[2]))
+
+        self.mlp2 = Linear(n[1] * 2, n[2])
         self.conv2 = EdgeConv(self.mlp2)
         self.norm2 = BatchNorm(in_channels=n[2])
 
-        self.mlp3 = Sequential(Linear(2*n[2], n[3]),
-                              ReLU(),
-                              Linear(n[3], n[3]))
+        self.mlp3 = Linear(n[2] * 2, n[3])
         self.conv3 = EdgeConv(self.mlp3)
         self.norm3 = BatchNorm(in_channels=n[3])
-        self.mlp4 = Sequential(Linear(2*n[3], n[4]),
-                              ReLU(),
-                              Linear(n[4], n[4]))
+
+        self.mlp4 = Linear(n[3] * 2, n[4])
         self.conv4 = EdgeConv(self.mlp4)
         self.norm4 = BatchNorm(in_channels=n[4])
 
-        self.mlp5 = Sequential(Linear(2*n[4], n[5]),
-                              ReLU(),
-                              Linear(n[5], n[5]))
+        self.mlp5 = Linear(n[4] * 2, n[5])
         self.conv5 = EdgeConv(self.mlp5)
         self.norm5 = BatchNorm(in_channels=n[5])
         self.pool5 = MaxPooling(pooling_size, transform=Cartesian(norm=True, cat=False))
 
-        self.mlp6 = Sequential(Linear(2*n[5], n[6]),
-                              ReLU(),
-                              Linear(n[6], n[6]))
+        self.mlp6 = Linear(n[5] * 2, n[6])
         self.conv6 = EdgeConv(self.mlp6)
         self.norm6 = BatchNorm(in_channels=n[6])
-        self.mlp7 = Sequential(Linear(2*n[6], n[6]),
-                              ReLU(),
-                              Linear(n[7], n[7]))
+
+        self.mlp7 = Linear(n[6] * 2, n[7])
         self.conv7 = EdgeConv(self.mlp7)
         self.norm7 = BatchNorm(in_channels=n[7])
 

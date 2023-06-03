@@ -25,8 +25,8 @@ class PGC(torch.nn.Module):
             pooling_outputs = 32
         elif dataset == "ncaltech101" or dataset == "gen1":
             kernel_size = 8
-            n = [1, 4, 16, 16, 16, 32, 32, 32]
-            pooling_outputs = 32
+            n = [1, 16, 64, 64, 64, 128, 128, 128]
+            pooling_outputs = 128
         else:
             raise NotImplementedError(f"No model parameters for dataset {dataset}")
 
