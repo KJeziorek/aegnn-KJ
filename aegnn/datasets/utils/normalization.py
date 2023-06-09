@@ -7,4 +7,4 @@ def normalize_time(ts: torch.Tensor, beta: float = 0.5e-5) -> torch.Tensor:
     :param ts: time-stamps to normalize in microseconds [N].
     :param beta: re-scaling factor.
     """
-    return (ts - torch.min(ts)) * beta
+    return (ts - torch.min(ts)) * (100 / torch.max(ts))
