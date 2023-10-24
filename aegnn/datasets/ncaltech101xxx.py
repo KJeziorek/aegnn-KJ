@@ -20,7 +20,7 @@ class NCaltech101(EventDataModule):
 
     def __init__(self, batch_size: int = 64, shuffle: bool = True, num_workers: int = 8,
                  pin_memory: bool = False, transform: Optional[Callable[[Data], Data]] = None):
-        super(NCaltech101, self).__init__(img_shape=(128, 128), batch_size=batch_size, shuffle=shuffle,
+        super(NCaltech101, self).__init__(img_shape=(240, 180), batch_size=batch_size, shuffle=shuffle,
                                           num_workers=num_workers, pin_memory=pin_memory, transform=transform)
         pre_processing_params = {"r": 5.0, "d_max": 32, "n_samples": 25000, "sampling": True}
         self.save_hyperparameters({"preprocessing": pre_processing_params})
@@ -50,7 +50,6 @@ class NCaltech101(EventDataModule):
             annotations[5] - annotations[1],  # height
             class_id
         ])
-        
         bbox[:2] = np.maximum(bbox[:2], 0)
         return bbox.reshape((1, 1, -1))
 
@@ -152,65 +151,9 @@ class NCaltech101(EventDataModule):
         data = self.sub_sampling(data, n_samples=params["n_samples"], sub_sample=params["sampling"])
 
         # Re-weight temporal vs. spatial dimensions to account for different resolutions.
-        #data.pos[:, 2] = normalize_time(data.pos[:, 2])
-        data = self.normalize_xyt(data)
-        
+        data.pos[:, 2] = normalize_time(data.pos[:, 2])
         # Radius graph generation.
-        data = self.generate_edges(data, r=params["r"], max_num_neighbors=params["d_max"])
-        #data.edge_index = radius_graph(data.pos, r=params["r"], max_num_neighbors=params["d_max"])
-        return data
-
-    def normalize_xyt(self, data: Data, dimension_XY: int = 128, dimension_T: int = 128) -> Data:
-        x = data.pos[:, 0]
-        y = data.pos[:, 1]
-        t = data.pos[:, 2]
-
-        # Sort data for edge generation
-        t, idx = torch.sort(t)
-        x = x[idx]
-        y = y[idx]
-        data.x = data.x[idx] 
-
-        # Normalize data and round
-
-        data.pos[:, 0] = torch.round(x * (dimension_XY / 240))
-        data.pos[:, 1] = torch.round(y * (dimension_XY / 180))
-        data.pos[:, 2] = torch.round((t - torch.min(t)) * (dimension_T / torch.max(t)))
-
-        # Rescale bbox same as normalization
-        if data.bbox is not None:
-            data.bbox[0,0,0] = torch.round(data.bbox[0,0,0] * (dimension_XY / 240)) # left ?
-            data.bbox[0,0,1] = torch.round(data.bbox[0,0,1] * (dimension_XY / 180)) # upper ?
-
-            data.bbox[0,0,2] = torch.round(data.bbox[0,0,2] * (dimension_XY / 240)) # width
-            data.bbox[0,0,3] = torch.round(data.bbox[0,0,3] * (dimension_XY / 180)) # heigth
-
-        return data
-
-    def generate_edges(self, data, r, max_num_neighbors, dimension_XY=128):
-        matrix = np.ones((dimension_XY, dimension_XY)) * -1
-        iter = -1
-        pos = data.pos.numpy()
-
-        edges_index = np.array([[],[]], dtype=np.int32)
-
-        for event in pos:
-            if iter == -1:
-                iter += 1
-            else:
-                iter += 1
-                for i in range(int(event[0]-r), int(event[0]+r)):
-                    for j in range(int(event[1]-r), int(event[1]+r)):
-
-                        if i >= 0 and i < dimension_XY and j >= 0 and j < dimension_XY and matrix[i, j] != -1:
-                            
-                            distance = ((event - pos[int(matrix[i, j])]) ** 2).sum()
-                            if distance < r ** 2:
-                                edges_index = np.append(edges_index, [[matrix[i, j]], [iter]], axis=1)
-
-            matrix[int(event[0]), int(event[0])] = iter
-            
-            data.edge_index = torch.tensor(edges_index).long()
+        data.edge_index = radius_graph(data.pos, r=params["r"], max_num_neighbors=params["d_max"])
         return data
 
     @staticmethod

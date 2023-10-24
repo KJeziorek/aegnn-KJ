@@ -19,11 +19,13 @@ class MaxPooling(torch.nn.Module):
 
         cluster = voxel_grid(pos[:, :2], batch=batch, size=self.voxel_size)
         data = Data(x=x, pos=pos, edge_index=edge_index, batch=batch)
-        data = max_pool(cluster, data=data, transform=self.transform)  # transform for new edge attributes
+        #data = max_pool(cluster, data=data, transform=self.transform)  # transform for new edge attributes
+        data = max_pool(cluster, data=data)
         if return_data_obj:
             return data
         else:
-            return data.x, data.pos, getattr(data, "batch"), data.edge_index, data.edge_attr
+            #return data.x, data.pos, getattr(data, "batch"), data.edge_index, data.edge_attr
+            return data.x, data.pos, getattr(data, "batch"), data.edge_index
 
     def __repr__(self):
         return f"{self.__class__.__name__}(voxel_size={self.voxel_size})"

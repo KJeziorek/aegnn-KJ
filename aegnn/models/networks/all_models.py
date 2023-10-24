@@ -3,59 +3,11 @@ import torch_geometric
 
 from torch.nn import Sequential, Linear, ReLU, Dropout
 from torch.nn.functional import elu
-from torch_geometric.nn.conv import PointNetConv, EdgeConv, SAGEConv, SplineConv, GCNConv, PointGNNConv
+from torch_geometric.nn.conv import PointNetConv
 from torch_geometric.nn.norm import BatchNorm
 from torch_geometric.transforms import Cartesian
 
 from aegnn.models.layer import MaxPooling, MaxPoolingX
-
-class GCNBlock(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-
-        self.conv = GCNConv(in_channels, out_channels)
-        self.norm = BatchNorm(in_channels=out_channels)
-
-    def forward(self, x, edge_index, edge_attr):
-        x = elu(self.conv(x, edge_index, edge_attr))
-        x = self.norm(x)
-        return x
-    
-class EdgeBlock(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-        self.mlp = Linear(in_channels * 2, out_channels)
-        self.conv = EdgeConv(self.mlp)
-        self.norm = BatchNorm(in_channels=out_channels)
-
-    def forward(self, x, edge_index):
-        x = elu(self.conv(x, edge_index))
-        x = self.norm(x)
-        return x
-
-class SplineBlock(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-
-        self.conv = SplineConv(in_channels, out_channels, dim=3, kernel_size=8, bias=False, root_weight=False)
-        self.norm = BatchNorm(in_channels=out_channels)
-
-    def forward(self, x, edge_index, edge_attr):
-        x = elu(self.conv(x, edge_index, edge_attr))
-        x = self.norm(x)
-        return x
-       
-class SageBlock(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-
-        self.conv = SAGEConv(in_channels, out_channels, root_weight=False, bias=False)
-        self.norm = BatchNorm(in_channels=out_channels)
-
-    def forward(self, x, edge_index):
-        x = elu(self.conv(x, edge_index))
-        x = self.norm(x)
-        return x
     
 class PointNetBlock(torch.nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -67,21 +19,6 @@ class PointNetBlock(torch.nn.Module):
 
     def forward(self, x, pos, edge_index):
         x = elu(self.conv(x, pos, edge_index))
-        x = self.norm(x)
-        return x
-
-class PointGNNBlock(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-        
-        self.mlp_h = Linear(in_channels, 3)
-        self.mlp_f = Linear(4, out_channels)
-        self.mlp_g = Linear(out_channels, out_channels)
-        self.conv = PointGNNConv(self.mlp_h, self.mlp_f, self.mlp_g)
-        self.norm = BatchNorm(in_channels=out_channels)
-
-    def forward(self, x, edge_index, edge_attr):
-        x = elu(self.conv(x, edge_index, edge_attr))
         x = self.norm(x)
         return x
     
@@ -114,14 +51,14 @@ class GNNModel(torch.nn.Module):
         self.point5 = PointNetBlock(32, 32)
 
         self.pool2 = MaxPooling(
-            (4, 4), transform=Cartesian(norm=True, cat=False))
+            (8, 8), transform=Cartesian(norm=True, cat=False))
         
         self.point6 = PointNetBlock(32, 64)
         self.point7 = PointNetBlock(64, 64)
         self.point8 = PointNetBlock(64, 64)
 
         self.pool3 = MaxPooling(
-            (4, 4), transform=Cartesian(norm=True, cat=False))
+            (16, 16), transform=Cartesian(norm=True, cat=False))
         
         self.point9 = PointNetBlock(64, 128)
         self.point10 = PointNetBlock(128, 128)

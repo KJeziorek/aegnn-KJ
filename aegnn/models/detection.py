@@ -46,7 +46,7 @@ class DetectionModel(pl.LightningModule):
 
     def forward(self, data: torch_geometric.data.Batch) -> torch.Tensor:
         data.pos = data.pos[:, :self.dim]
-        data.edge_attr = data.edge_attr[:, :self.dim]
+        #data.edge_attr = data.edge_attr[:, :self.dim]
         x = self.model.forward(data)
         return x.view(-1, *self.cell_map_shape, self.num_outputs_per_cell)
 
@@ -61,20 +61,20 @@ class DetectionModel(pl.LightningModule):
         gt_bb_batch = getattr(batch, "batch_bbox")
         logging.debug(f"Loss computation on batch with {len(gt_bb)} ground-truth bounding boxes")
         loss, losses_dict, iou = self.loss(outputs, bounding_box=gt_bb, bbox_batch=gt_bb_batch)
-        loss_logs = {f"Train/Loss-{name.capitalize()}": value for name, value in losses_dict.items()}
+        # loss_logs = {f"Train/Loss-{name.capitalize()}": value for name, value in losses_dict.items()}
 
-        # Compute metrics for the recognition (class accuracy) and detection (iou) part, as well as combined
-        # metrics (mean average precision = mAP).
-        logging.debug("Parsing model outputs to evaluate the model performance")
-        gt_batch = gt_bb_batch.detach().cpu()
-        detected_bbox = self.detect_nms(model_outputs=outputs)
+        # # Compute metrics for the recognition (class accuracy) and detection (iou) part, as well as combined
+        # # metrics (mean average precision = mAP).
+        # logging.debug("Parsing model outputs to evaluate the model performance")
+        # gt_batch = gt_bb_batch.detach().cpu()
+        # detected_bbox = self.detect_nms(model_outputs=outputs)
 
-        train_accuracy = compute_detection_accuracy(detected_bbox, gt_y=batch.y.detach().cpu(), gt_batch=gt_batch)
-        train_map = compute_map(detected_bbox, gt_bbox=gt_bb.detach().cpu(), gt_batch=gt_batch)
-        metrics_logs = {"Train/Accuracy": train_accuracy, "Train/mAP": train_map}
+        # train_accuracy = compute_detection_accuracy(detected_bbox, gt_y=batch.y.detach().cpu(), gt_batch=gt_batch)
+        # train_map = compute_map(detected_bbox, gt_bbox=gt_bb.detach().cpu(), gt_batch=gt_batch)
+        # metrics_logs = {"Train/Accuracy": train_accuracy, "Train/mAP": train_map}
 
-        # Send loss and evaluation metrics to logger for logging.
-        self.logger.log_metrics({"Train/Loss": loss, "Train/IOU": iou.mean(), **loss_logs, **metrics_logs})
+        # # Send loss and evaluation metrics to logger for logging.
+        # self.logger.log_metrics({"Train/Loss": loss, "Train/IOU": iou.mean(), **loss_logs, **metrics_logs})
         return loss
 
     def validation_step(self, batch: torch_geometric.data.Batch, batch_idx: int) -> torch.Tensor:
