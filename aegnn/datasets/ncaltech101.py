@@ -5,6 +5,8 @@ import numpy as np
 import os
 import torch
 
+import matplotlib.pyplot as plt
+
 from torch_geometric.data import Data
 from torch_geometric.nn.pool import radius_graph
 from torch_geometric.transforms import FixedPoints
@@ -22,7 +24,7 @@ class NCaltech101(EventDataModule):
                  pin_memory: bool = False, transform: Optional[Callable[[Data], Data]] = None):
         super(NCaltech101, self).__init__(img_shape=(128, 128), batch_size=batch_size, shuffle=shuffle,
                                           num_workers=num_workers, pin_memory=pin_memory, transform=transform)
-        pre_processing_params = {"r": 5.0, "d_max": 32, "n_samples": 25000, "sampling": True}
+        pre_processing_params = {"r": 3.0, "d_max": 32, "n_samples": 25000, "sampling": True}
         self.save_hyperparameters({"preprocessing": pre_processing_params})
 
     def read_annotations(self, raw_file: str) -> Optional[np.ndarray]:
@@ -206,13 +208,53 @@ class NCaltech101(EventDataModule):
                             
                             distance = ((event - pos[int(matrix[i, j])]) ** 2).sum()
                             if distance < r ** 2:
-                                edges_index = np.append(edges_index, [[matrix[i, j]], [iter]], axis=1)
+                                edges_index = np.append(edges_index, [[iter], [matrix[i, j]]], axis=1)
 
-            matrix[int(event[0]), int(event[0])] = iter
+            matrix[int(event[0]), int(event[1])] = iter
             
-            data.edge_index = torch.tensor(edges_index).long()
+        data.edge_index = torch.tensor(edges_index).long()
         return data
 
+    # def generate_edges(self, data, r, max_num_neighbors, dimension_XY=128):
+    #     length = 4
+
+    #     matrix = np.ones((dimension_XY, dimension_XY, length)) * -1
+    #     iter = -1
+    #     pos = data.pos.numpy()
+
+    #     edges_index = np.array([[],[]], dtype=np.int32)
+        
+    #     for event in pos:
+    #         from_vec = np.array([], dtype=np.int32)
+    #         to_vec = np.array([], dtype=np.int32)
+    #         dist_vec = np.array([])
+    #         if iter == -1:
+    #             iter += 1
+    #         else:
+    #             iter += 1
+    #             for i in range(int(event[0]-r), int(event[0]+r)):
+    #                 for j in range(int(event[1]-r), int(event[1]+r)):
+    #                     for k in range(length):  
+    #                         if i >= 0 and i < dimension_XY and j >= 0 and j < dimension_XY and matrix[i, j, 0] != -1:
+    #                             distance = ((event - pos[int(matrix[i, j, k])]) ** 2).sum()
+    #                             if distance < r ** 2:
+    #                                 from_vec = np.append(from_vec, int(matrix[i, j, k]))
+    #                                 to_vec = np.append(to_vec, iter)
+    #                                 dist_vec = np.append(dist_vec, distance)
+
+    #             if len(dist_vec) > 0:
+    #                 a = np.argsort(dist_vec)
+    #                 edges = np.array([from_vec[a[:64]], to_vec[a[:64]]], dtype=np.int32)
+    #                 edges_index = np.append(edges_index, edges, axis=1)
+
+    #             matrix[int(event[0]), int(event[1]), 3] = matrix[int(event[0]), int(event[1]), 2]
+    #             matrix[int(event[0]), int(event[1]), 2] = matrix[int(event[0]), int(event[1]), 1]
+    #             matrix[int(event[0]), int(event[1]), 1] = matrix[int(event[0]), int(event[1]), 0]
+    #             matrix[int(event[0]), int(event[1]), 0] = iter
+                
+    #     data.edge_index = torch.tensor(edges_index).long()
+    #     return data
+    
     @staticmethod
     def sub_sampling(data: Data, n_samples: int, sub_sample: bool) -> Data:
         if sub_sample:
